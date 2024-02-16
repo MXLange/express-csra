@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
 import { program } from "commander";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import readline from "readline";
+import fsExtra from "fs-extra";
 import fs from "fs";
 
 const cmdReadline = readline.createInterface({
@@ -60,30 +61,63 @@ program.parse(process.argv);
 // Functions
 
 function make(name) {
+    if (fs.existsSync(`${projectDir}/${name}`)) {
+        cmdReadline.question("The project already exists. Do you want to overwrite it? (y/n) ", (answer) => {
+            if (answer === "n") {
+                console.log("Process aborted!");
+                cmdReadline.close();
+                process.exit(1);
+            } else {
+                fs.rmdirSync(`${projectDir}/${name}`, { recursive: true });
+                createProject(name);
+            }
+        });
+    } else {
+        createProject(name);
+    }
+}
+
+async function createProject(name) {
     fs.mkdir(name, (err) => {
         if (err) {
             console.error(`Error creating directory: ${err}`);
             console.log("Project not built successfully!");
             process.exit(1);
-        } 
+        }
     });
 
-    console.log(`${projectDir}/${name}`);
+    const packageJsonContent = {
+        name: `${name}`,
+        version: "1.0.0",
+        description: "A new project built with csra-cli",
+        main: "index.js",
+        scripts: {
+            test: 'echo "Error: no test specified" && exit 1',
+        },
+        author: "Your Name",
+        license: "MIT",
+        scripts: {
+            start: "node src/app.js",
+        },
+        dependencies: {},
+        directories: {},
+        keywords: [],
+    };
+    fs.writeFileSync(`${projectDir}/${name}/package.json`, JSON.stringify(packageJsonContent, null, 2));
 
-    const npmInitCommand = `npm init --directory=${projectDir}/${name}`;
-    const childProcess = exec(npmInitCommand);
+    const sourceDirectory = `${projectDir}/src`;
+    const destinationDirectory = `${projectDir}/${name}/src`;
 
-    childProcess.stdout.on("data", (data) => {
-        console.log(`Standard output: ${data}`);
+    await fsExtra.copy(sourceDirectory, destinationDirectory)
+    .catch(err => {
+        fs.rmdirSync(`${projectDir}/${name}`, { recursive: true });
+        console.error(`Error copying files: ${err}`);
+        console.log("Project not built successfully!");
+        process.exit(1);
     });
 
-    childProcess.stderr.on("data", (data) => {
-        console.error(`Error output: ${data}`);
-    });
-
-    childProcess.on("close", (code) => {
-        console.log(`npm init command completed with exit code ${code}`);
-    });
+    cmdReadline.close();
+    process.exit(0);
 }
 
 function makeModel(path, name) {
