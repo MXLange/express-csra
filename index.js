@@ -49,18 +49,14 @@ program
     .command("makeEntity")
     .description("This command creates a new entity with the provided name.")
     .action(async () => {
-        let { name, path } = program.opts();
+        let { name } = program.opts();
         if (!name) {
             console.warn("You must provide a name for the entity. Use the -n or --name option.");
             console.log("Entity not built successfully!");
             return;
         }
-        if (!path) {
-            console.warn("You must provide a path for the entity. Use the -p or --path option.");
-            console.log("Entity not built successfully!");
-            return;
-        }
-        makeModel(path, name);
+
+        makeModel({ path: null, name });
     });
 
 program.parse(process.argv);
@@ -93,10 +89,20 @@ async function createProject(name) {
         }
     });
 
-    const sourceDirectory = `${projectDir}/src`;
-    const destinationDirectory = `${currentWorkingDirectory}/${name}/src`;
+    let sourceDirectory = `${projectDir}/src`;
+    let destinationDirectory = `${currentWorkingDirectory}/${name}/src`;
 
     await fsExtra.copy(sourceDirectory, destinationDirectory).catch((err) => {
+        fs.rmdirSync(`${currentWorkingDirectory}/${name}`, { recursive: true });
+        console.error(`Error copying files: ${err}`);
+        console.log("Project not built successfully!");
+        process.exit(1);
+    });
+
+    let sourceFile = `${projectDir}/.env`;
+    destinationDirectory = `${currentWorkingDirectory}/${name}/.env`;
+
+    await fsExtra.copy(sourceFile, destinationDirectory).catch((err) => {
         fs.rmdirSync(`${currentWorkingDirectory}/${name}`, { recursive: true });
         console.error(`Error copying files: ${err}`);
         console.log("Project not built successfully!");
@@ -106,30 +112,34 @@ async function createProject(name) {
     let command = "npm init";
 
     try {
-        execSync(command, {cwd: `${currentWorkingDirectory}/${name}`, stdio: 'inherit' });
-        console.log('Project initialized successfully.');
+        execSync(command, { cwd: `${currentWorkingDirectory}/${name}`, stdio: "inherit" });
+        console.log("Project initialized successfully.");
     } catch (error) {
         console.error(`Error initializing project: ${error.message}`);
     }
 
     const dependencies = ["express", "dotenv"];
-    const dependenciesAsString = dependencies.join(' ');
-    
+    const dependenciesAsString = dependencies.join(" ");
+
     command = `npm install ${dependenciesAsString}`;
-    
+
     try {
-      execSync(command, { cwd: `${currentWorkingDirectory}/${name}` ,stdio: 'inherit' });
-      console.log('Dependencies installed successfully.');
+        execSync(command, { cwd: `${currentWorkingDirectory}/${name}`, stdio: "inherit" });
+        console.log("Dependencies installed successfully.");
     } catch (error) {
-      console.error(`Error installing dependencies: ${error.message}`);
+        console.error(`Error installing dependencies: ${error.message}`);
     }
 
     cmdReadline.close();
     process.exit(0);
 }
 
-function makeModel(path, name) {
+function makeModel({ path, name }) {
     console.log("Building a new entity...");
+
+    if (!path) {
+        path = "./src/app/domains";
+    }
 
     path = path.replace(/\\/g, "/");
     path = path.replace("./", "");
@@ -180,19 +190,17 @@ function makeModel(path, name) {
             };
 
             const entityDir = `${dirPath}/${entityName}`;
-            console.log("EntityDir:", entityDir);
 
             if (!fs.existsSync(entityDir)) {
                 fs.mkdirSync(entityDir);
-                createModelFiles(entityDir, entityName, models);
                 console.log("Entity built successfully!");
-                process.exit(0);
+                createModelFiles(entityDir, entityName, models);
             } else {
                 cmdReadline.question("The entity already exists. Do you want to overwrite it? (y/n) ", (answer) => {
                     if (answer === "y") {
-                        createModelFiles(entityDir, entityName, models);
                         console.log("Entity built successfully!");
-                        cmdReadline.close();
+                        createModelFiles(entityDir, entityName, models);
+                        
                     } else {
                         console.log("Process aborted!");
                         cmdReadline.close();
@@ -212,4 +220,39 @@ function createModelFiles(entityDir, entityName, model) {
     fs.writeFileSync(`${entityDir}/${entityName}Repository.js`, ModelRepository);
     fs.writeFileSync(`${entityDir}/${entityName}ApiConsumer.js`, ModelApiConsumer);
     fs.writeFileSync(`${entityDir}/${entityName}Routes.js`, modelRoutes);
+
+    cmdReadline.question("Do you want to create a route for this entity? (y/n) ", (answer) => {
+        if (answer === "y" || answer === "Y" || answer === "yes" || answer === "Yes") {
+            const routeCreated = createModelRoute({ name: entityName});
+            if (routeCreated) {
+                console.log("Route built successfully!");
+            } else {
+                console.log("Route not built successfully!");
+            }
+        }
+        cmdReadline.close();
+        process.exit(0);
+    });
+}
+
+function createModelRoute({ name }) {
+    const path = `./domains/${name}/${name}Routes`;
+    const entityName = name.toLowerCase();
+    let routesFile = fs.readFileSync(`${projectDir}/src/app/routes.js`, "utf-8");
+
+    //create route on last line
+    let lines = routesFile.split("\n");
+    const newRoute = `routes.use("/${entityName}", ${entityName}Routes);\n`;
+
+    lines.push(newRoute);
+    lines.unshift(`import { ${entityName}Routes } from "./domains/${entityName}/${entityName}Routes";`);
+    
+    routesFile = lines.join("\n");
+    try {
+        fs.writeFileSync(`${currentWorkingDirectory}/src/app/routes.js`, routesFile);
+        return true;
+    } catch (error) {
+        console.error(`Error creating route: ${error.message}`);
+        return false;
+    }
 }
