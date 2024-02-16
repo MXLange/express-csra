@@ -13,9 +13,16 @@ const cmdReadline = readline.createInterface({
     output: process.stdout,
 });
 
-const currentModulePath = fileURLToPath(import.meta.url);
+let currentModulePath = fileURLToPath(import.meta.url);
+let currentWorkingDirectory = process.cwd();
 let projectDir = dirname(currentModulePath);
+currentModulePath = currentModulePath.replace(/\\/g, "/");
+currentWorkingDirectory = currentWorkingDirectory.replace(/\\/g, "/");
 projectDir = projectDir.replace(/\\/g, "/");
+
+console.log("CurrentModulePath:", currentModulePath);
+console.log("CurrentWorkingDirectory:", currentWorkingDirectory);
+console.log("ProjectDir:", projectDir);
 
 program
     .version("0.0.1")
@@ -61,14 +68,14 @@ program.parse(process.argv);
 // Functions
 
 function make(name) {
-    if (fs.existsSync(`${projectDir}/${name}`)) {
+    if (fs.existsSync(`${currentWorkingDirectory}/${name}`)) {
         cmdReadline.question("The project already exists. Do you want to overwrite it? (y/n) ", (answer) => {
             if (answer === "n") {
                 console.log("Process aborted!");
                 cmdReadline.close();
                 process.exit(1);
             } else {
-                fs.rmdirSync(`${projectDir}/${name}`, { recursive: true });
+                fs.rmdirSync(`${currentWorkingDirectory}/${name}`, { recursive: true });
                 createProject(name);
             }
         });
@@ -103,14 +110,14 @@ async function createProject(name) {
         directories: {},
         keywords: [],
     };
-    fs.writeFileSync(`${projectDir}/${name}/package.json`, JSON.stringify(packageJsonContent, null, 2));
+    fs.writeFileSync(`${currentWorkingDirectory}/${name}/package.json`, JSON.stringify(packageJsonContent, null, 2));
 
     const sourceDirectory = `${projectDir}/src`;
-    const destinationDirectory = `${projectDir}/${name}/src`;
+    const destinationDirectory = `${currentWorkingDirectory}/${name}/src`;
 
     await fsExtra.copy(sourceDirectory, destinationDirectory)
     .catch(err => {
-        fs.rmdirSync(`${projectDir}/${name}`, { recursive: true });
+        fs.rmdirSync(`${currentWorkingDirectory}/${name}`, { recursive: true });
         console.error(`Error copying files: ${err}`);
         console.log("Project not built successfully!");
         process.exit(1);

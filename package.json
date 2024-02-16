@@ -4,6 +4,9 @@
   "description": "A project builder to Controller, Service, Repository and API's with express.",
   "main": "index.js",
   "type": "module",
+  "bin": {
+    "csra": "./bin/csra.cmd"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
