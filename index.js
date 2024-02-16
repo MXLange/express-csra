@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { program } from "commander";
-import { exec, spawn } from "child_process";
+import { exec, spawn, execSync } from "child_process";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import readline from "readline";
@@ -93,35 +93,36 @@ async function createProject(name) {
         }
     });
 
-    const packageJsonContent = {
-        name: `${name}`,
-        version: "1.0.0",
-        description: "A new project built with csra-cli",
-        main: "index.js",
-        scripts: {
-            test: 'echo "Error: no test specified" && exit 1',
-        },
-        author: "Your Name",
-        license: "MIT",
-        scripts: {
-            start: "node src/app.js",
-        },
-        dependencies: {},
-        directories: {},
-        keywords: [],
-    };
-    fs.writeFileSync(`${currentWorkingDirectory}/${name}/package.json`, JSON.stringify(packageJsonContent, null, 2));
-
     const sourceDirectory = `${projectDir}/src`;
     const destinationDirectory = `${currentWorkingDirectory}/${name}/src`;
 
-    await fsExtra.copy(sourceDirectory, destinationDirectory)
-    .catch(err => {
+    await fsExtra.copy(sourceDirectory, destinationDirectory).catch((err) => {
         fs.rmdirSync(`${currentWorkingDirectory}/${name}`, { recursive: true });
         console.error(`Error copying files: ${err}`);
         console.log("Project not built successfully!");
         process.exit(1);
     });
+
+    let command = "npm init";
+
+    try {
+        execSync(command, {cwd: `${currentWorkingDirectory}/${name}`, stdio: 'inherit' });
+        console.log('Project initialized successfully.');
+    } catch (error) {
+        console.error(`Error initializing project: ${error.message}`);
+    }
+
+    const dependencies = ["express", "dotenv"];
+    const dependenciesAsString = dependencies.join(' ');
+    
+    command = `npm install ${dependenciesAsString}`;
+    
+    try {
+      execSync(command, { cwd: `${currentWorkingDirectory}/${name}` ,stdio: 'inherit' });
+      console.log('Dependencies installed successfully.');
+    } catch (error) {
+      console.error(`Error installing dependencies: ${error.message}`);
+    }
 
     cmdReadline.close();
     process.exit(0);
@@ -132,7 +133,7 @@ function makeModel(path, name) {
 
     path = path.replace(/\\/g, "/");
     path = path.replace("./", "");
-    const dirPath = `${projectDir}/${path}`;
+    const dirPath = `${currentWorkingDirectory}/${path}`;
 
     fs.stat(dirPath, (err, stats) => {
         if (err) {
