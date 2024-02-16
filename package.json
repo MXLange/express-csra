@@ -1,0 +1,21 @@
+{
+  "name": "express-csra",
+  "version": "0.0.1",
+  "description": "A project builder to Controller, Service, Repository and API's with express.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Murillo Sprengel Lange (MXLange)",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^12.0.0",
+    "find-up": "^7.0.0"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "devDependencies": {},
+  "keywords": []
+}
