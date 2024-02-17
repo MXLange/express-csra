@@ -264,7 +264,7 @@ function createModelRoute({ name }) {
     const newRoute = `routes.use("/${entityName}", ${entityName}Routes);\n`;
 
     lines.push(newRoute);
-    lines.unshift(`import { ${entityName}Routes } from "./domains/${entityName}/${entityName}Routes";`);
+    lines.unshift(`import { ${entityName}Routes } from "${path}";`);
 
     routesFile = lines.join("\n");
     try {
