@@ -1,5 +1,5 @@
-import { Router } from "express";
 import { modelRoutes } from "./domains/model/modelRoutes.js";
+import { Router } from "express";
 
 export const routes = Router();
 
