@@ -25,12 +25,6 @@ We also have some dev dependencies:
     <li>nodemon</li>
 </ul>
 
-<style>
-  li {
-    color: #D2691E;
-  }
-</style>
-
 ## Installation
 
 The installation of the package must be done globally:
