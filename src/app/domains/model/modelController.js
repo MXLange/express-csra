@@ -1,5 +1,5 @@
 import ModelService from "./modelService.js";
-import AppResponse from "../../shared/classes/appResponse.js";
+import AppResponse from "../../shared/classes/AppResponse.js";
 
 export default class ModelController {
     async getAll(req, res) {
