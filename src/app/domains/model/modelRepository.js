@@ -18,6 +18,7 @@ export default class ModelRepository {
     }
     async getById({ id }) {
         //TODO: Implement getById
+        id = parseInt(id);
         const models = [
             {
                 id: 1,
