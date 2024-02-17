@@ -117,7 +117,7 @@ async function createProject(name) {
         console.error(`Error initializing project: ${error.message}`);
     }
 
-    const dependencies = ["express", "dotenv", "express-async-errors"];
+    const dependencies = ["express", "dotenv", "express-async-errors", "cors"];
     const devDependencies = ["nodemon"];
     const dependenciesAsString = dependencies.join(" ");
     const devDependenciesAsString = devDependencies.join(" ");

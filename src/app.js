@@ -1,6 +1,7 @@
 import "dotenv/config";
 import "express-async-errors"
 import express from "express";
+import cors from "cors";
 import { routes } from "./app/routes.js";
 import { error_middleware } from "./app/shared/middlewares/ErrorMiddleware.js";
 
@@ -10,6 +11,7 @@ const port = process.env.PORT || 3000;
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 app.use(routes);
 
 app.get("/", (req, res) => {
