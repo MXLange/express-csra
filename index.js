@@ -255,7 +255,7 @@ function createModelFiles(entityDir, entityName, model) {
 }
 
 function createModelRoute({ name }) {
-    const path = `./domains/${name}/${name}Routes`;
+    const path = `./domains/${name}/${name}Routes.js`;
     const entityName = name.toLowerCase();
     let routesFile = fs.readFileSync(`${projectDir}/src/app/routes.js`, "utf-8");
 
