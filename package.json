@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "bin": {
-    "csra": "./bin/csra.js"
+    "csra": "bin/csra.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -24,5 +24,14 @@
   "keywords": [
     "make",
     "makeEntity"
-  ]
+  ],
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MXLange/express-csra.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MXLange/express-csra/issues"
+  },
+  "homepage": "https://github.com/MXLange/express-csra#readme"
 }
