@@ -13,16 +13,16 @@ The CLI allows you to create a standard CSRA, Controller, Service, Repository an
 These dependencies will be installed when starting the project:
 
 <ul>
-    <li>express</li>
-    <li>express-async-errors</li>
-    <li>dotenv</li>
-    <li>cors</li>
+    <li style="color:#D2691E">express</li>
+    <li style="color:#D2691E">express-async-errors</li>
+    <li style="color:#D2691E">dotenv</li>
+    <li style="color:#D2691E">cors</li>
 </ul>
 
 We also have some dev dependencies:
 
 <ul>
-    <li>nodemon</li>
+    <li style="color:#D2691E">nodemon</li>
 </ul>
 
 ## Installation
