@@ -1,6 +1,6 @@
 import "dotenv/config";
 import express from "express";
-import { routes } from "./app/routes";
+import { routes } from "./app/routes.js";
 
 // At the .env file, set the PORT variable.
 const port = process.env.PORT || 3000;

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { program } from "commander";
-import { exec, spawn, execSync } from "child_process";
+import { execSync } from "child_process";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import readline from "readline";
@@ -19,10 +19,6 @@ let projectDir = dirname(currentModulePath);
 currentModulePath = currentModulePath.replace(/\\/g, "/");
 currentWorkingDirectory = currentWorkingDirectory.replace(/\\/g, "/");
 projectDir = projectDir.replace(/\\/g, "/");
-
-console.log("CurrentModulePath:", currentModulePath);
-console.log("CurrentWorkingDirectory:", currentWorkingDirectory);
-console.log("ProjectDir:", projectDir);
 
 program
     .version("0.0.1")
@@ -119,16 +115,40 @@ async function createProject(name) {
     }
 
     const dependencies = ["express", "dotenv"];
+    const devDependencies = ["nodemon"];
     const dependenciesAsString = dependencies.join(" ");
-
+    const devDependenciesAsString = devDependencies.join(" ");
+    
     command = `npm install ${dependenciesAsString}`;
 
+    console.log("Installing dependencies...");
     try {
         execSync(command, { cwd: `${currentWorkingDirectory}/${name}`, stdio: "inherit" });
         console.log("Dependencies installed successfully.");
     } catch (error) {
         console.error(`Error installing dependencies: ${error.message}`);
     }
+
+    console.log("Installing dev dependencies...");
+    command = `npm install ${devDependenciesAsString} --save-dev`;
+
+    try {
+        execSync(command, { cwd: `${currentWorkingDirectory}/${name}`, stdio: "inherit" });
+        console.log("Dev dependencies installed successfully.");
+    } catch (error) {
+        console.error(`Error installing dev dependencies: ${error.message}`);
+    }
+
+    let packajeJson = fs.readFileSync(`${currentWorkingDirectory}/${name}/package.json`, "utf-8");
+
+    packajeJson = JSON.parse(packajeJson);
+    packajeJson.type = "module";
+    delete packajeJson.test;
+    packajeJson.scripts.dev = "nodemon ./src/app.js";
+    packajeJson.scripts.start = "node ./src/app.js";
+    packajeJson = JSON.stringify(packajeJson);
+
+    fs.writeFileSync(`${currentWorkingDirectory}/${name}/package.json`, packajeJson);
 
     cmdReadline.close();
     process.exit(0);
@@ -200,7 +220,6 @@ function makeModel({ path, name }) {
                     if (answer === "y") {
                         console.log("Entity built successfully!");
                         createModelFiles(entityDir, entityName, models);
-                        
                     } else {
                         console.log("Process aborted!");
                         cmdReadline.close();
@@ -223,7 +242,7 @@ function createModelFiles(entityDir, entityName, model) {
 
     cmdReadline.question("Do you want to create a route for this entity? (y/n) ", (answer) => {
         if (answer === "y" || answer === "Y" || answer === "yes" || answer === "Yes") {
-            const routeCreated = createModelRoute({ name: entityName});
+            const routeCreated = createModelRoute({ name: entityName });
             if (routeCreated) {
                 console.log("Route built successfully!");
             } else {
@@ -246,7 +265,7 @@ function createModelRoute({ name }) {
 
     lines.push(newRoute);
     lines.unshift(`import { ${entityName}Routes } from "./domains/${entityName}/${entityName}Routes";`);
-    
+
     routesFile = lines.join("\n");
     try {
         fs.writeFileSync(`${currentWorkingDirectory}/src/app/routes.js`, routesFile);

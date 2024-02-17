@@ -1,7 +1,9 @@
-import { Routes } from "express";
-import { modelController } from "./modelController";
+import ModelController from "./modelController.js";
+import { Router } from "express";
 
-export const modelRoutes = Routes();
+export const modelRoutes = Router();
+
+const modelController = new ModelController();
 
 modelRoutes.get("/", modelController.getAll);
 modelRoutes.get("/:id", modelController.getById);
