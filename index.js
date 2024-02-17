@@ -36,7 +36,7 @@ program
         if (!name) {
             console.warn("You must provide a name for the project. Use the -n or --name option.");
             console.log("Project not built successfully!");
-            return;
+            process.exit(0);
         }
         make(name);
     });
@@ -49,7 +49,7 @@ program
         if (!name) {
             console.warn("You must provide a name for the entity. Use the -n or --name option.");
             console.log("Entity not built successfully!");
-            return;
+            process.exit(0);
         }
 
         makeModel({ path: null, name });
@@ -65,7 +65,7 @@ function make(name) {
             if (answer === "n") {
                 console.log("Process aborted!");
                 cmdReadline.close();
-                process.exit(1);
+                process.exit(0);
             } else {
                 fs.rmdirSync(`${currentWorkingDirectory}/${name}`, { recursive: true });
                 createProject(name);
@@ -81,7 +81,7 @@ async function createProject(name) {
         if (err) {
             console.error(`Error creating directory: ${err}`);
             console.log("Project not built successfully!");
-            process.exit(1);
+            process.exit(0);
         }
     });
 
@@ -92,7 +92,7 @@ async function createProject(name) {
         fs.rmdirSync(`${currentWorkingDirectory}/${name}`, { recursive: true });
         console.error(`Error copying files: ${err}`);
         console.log("Project not built successfully!");
-        process.exit(1);
+        process.exit(0);
     });
 
     let sourceFile = `${projectDir}/.env`;
@@ -102,7 +102,7 @@ async function createProject(name) {
         fs.rmdirSync(`${currentWorkingDirectory}/${name}`, { recursive: true });
         console.error(`Error copying files: ${err}`);
         console.log("Project not built successfully!");
-        process.exit(1);
+        process.exit(0);
     });
 
     let command = "npm init";
@@ -169,12 +169,12 @@ function makeModel({ path, name }) {
         if (err) {
             console.error("Path doesn't exists.");
             console.log("Entity not built successfully!");
-            process.exit(1);
+            process.exit(0);
         } else {
             if (stats.isFile()) {
                 console.warn("Path must be a directory, not a file.");
                 console.log("Entity not built successfully!");
-                process.exit(1);
+                process.exit(0);
             }
 
             const entityName = name.toLowerCase();
@@ -223,7 +223,7 @@ function makeModel({ path, name }) {
                     } else {
                         console.log("Process aborted!");
                         cmdReadline.close();
-                        process.exit(1);
+                        process.exit(0);
                     }
                 });
             }
