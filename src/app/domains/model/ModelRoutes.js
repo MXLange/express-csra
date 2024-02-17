@@ -1,4 +1,4 @@
-import ModelController from "./modelController.js";
+import ModelController from "./ModelController.js";
 import { Router } from "express";
 
 export const modelRoutes = Router();

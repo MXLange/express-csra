@@ -1,4 +1,4 @@
-import ModelRepository from "./modelRepository.js";
+import ModelRepository from "./ModelRepository.js";
 export default class ModelService {
     async getAll() {
         const modelRepository = new ModelRepository();

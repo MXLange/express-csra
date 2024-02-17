@@ -1,4 +1,4 @@
-import ModelService from "./modelService.js";
+import ModelService from "./ModelService.js";
 import AppResponse from "../../shared/classes/AppResponse.js";
 
 export default class ModelController {
@@ -6,7 +6,10 @@ export default class ModelController {
         
         const modelService = new ModelService();
         const modelList = await modelService.getAll();
-        const response = new AppResponse(true, modelList);
+        const response = new AppResponse({
+            success: true,
+            result: modelList
+        });
         return res.status(200).json(response);
     }
     async getById(req, res) {
@@ -15,7 +18,10 @@ export default class ModelController {
         
         const modelService = new ModelService();
         const model = await modelService.getById({ id });
-        const response = new AppResponse(true, model);
+        const response = new AppResponse({
+            success: true,
+            result: model
+        });
         return res.status(200).json(response);
     }
     async create(req, res) {
@@ -24,7 +30,10 @@ export default class ModelController {
 
         const modelService = new ModelService();
         const model = await modelService.create(body);
-        const response = new AppResponse(true, model);
+        const response = new AppResponse({
+            success: true,
+            result: model
+        });
         return res.status(201).json(response);
     }
     async update(req, res) {
@@ -34,7 +43,10 @@ export default class ModelController {
 
         const modelService = new ModelService();
         const model = await modelService.update({ id, body });
-        const response = new AppResponse(true, model);
+        const response = new AppResponse({
+            success: true,
+            result: model
+        });
         return res.status(200).json(response);
     }
     async delete(req, res) {
@@ -43,7 +55,10 @@ export default class ModelController {
 
         const modelService = new ModelService();
         const model = await modelService.delete({ id });
-        const response = new AppResponse(true, model);
+        const response = new AppResponse({
+            success: true,
+            result: model
+        });
         return res.status(200).json(response);
     }
 }

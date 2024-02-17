@@ -8,6 +8,9 @@ import readline from "readline";
 import fsExtra from "fs-extra";
 import fs from "fs";
 
+const yesAnswer = ["y", "Y", "yes", "Yes"];
+const noAnswer = ["n", "N", "no", "No"];
+
 const cmdReadline = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -62,7 +65,7 @@ program.parse(process.argv);
 function make(name) {
     if (fs.existsSync(`${currentWorkingDirectory}/${name}`)) {
         cmdReadline.question("The project already exists. Do you want to overwrite it? (y/n) ", (answer) => {
-            if (answer === "n") {
+            if (!yesAnswer.includes(answer)) {
                 console.log("Process aborted!");
                 cmdReadline.close();
                 process.exit(0);
@@ -114,7 +117,7 @@ async function createProject(name) {
         console.error(`Error initializing project: ${error.message}`);
     }
 
-    const dependencies = ["express", "dotenv"];
+    const dependencies = ["express", "dotenv", "express-async-errors"];
     const devDependencies = ["nodemon"];
     const dependenciesAsString = dependencies.join(" ");
     const devDependenciesAsString = devDependencies.join(" ");
@@ -122,6 +125,7 @@ async function createProject(name) {
     command = `npm install ${dependenciesAsString}`;
 
     console.log("Installing dependencies...");
+
     try {
         execSync(command, { cwd: `${currentWorkingDirectory}/${name}`, stdio: "inherit" });
         console.log("Dependencies installed successfully.");
@@ -130,6 +134,7 @@ async function createProject(name) {
     }
 
     console.log("Installing dev dependencies...");
+
     command = `npm install ${devDependenciesAsString} --save-dev`;
 
     try {
@@ -180,11 +185,11 @@ function makeModel({ path, name }) {
             const entityName = name.toLowerCase();
             const enntityNameFistLetterUpper = entityName[0].toUpperCase() + entityName.slice(1);
 
-            let ModelController = fs.readFileSync(`${projectDir}/src/app/domains/model/modelController.js`, "utf-8");
-            let ModelService = fs.readFileSync(`${projectDir}/src/app/domains/model/modelService.js`, "utf-8");
-            let ModelRepository = fs.readFileSync(`${projectDir}/src/app/domains/model/modelRepository.js`, "utf-8");
-            let ModelApiConsumer = fs.readFileSync(`${projectDir}/src/app/domains/model/modelApiConsumer.js`, "utf-8");
-            let modelRoutes = fs.readFileSync(`${projectDir}/src/app/domains/model/modelRoutes.js`, "utf-8");
+            let ModelController = fs.readFileSync(`${projectDir}/src/app/domains/model/ModelController.js`, "utf-8");
+            let ModelService = fs.readFileSync(`${projectDir}/src/app/domains/model/ModelService.js`, "utf-8");
+            let ModelRepository = fs.readFileSync(`${projectDir}/src/app/domains/model/ModelRepository.js`, "utf-8");
+            let ModelApiConsumer = fs.readFileSync(`${projectDir}/src/app/domains/model/ModelApiConsumer.js`, "utf-8");
+            let ModelRoutes = fs.readFileSync(`${projectDir}/src/app/domains/model/ModelRoutes.js`, "utf-8");
 
             ModelController = ModelController.replace(/Model/g, enntityNameFistLetterUpper);
             ModelController = ModelController.replace(/model/g, entityName.toLowerCase());
@@ -198,15 +203,15 @@ function makeModel({ path, name }) {
             ModelApiConsumer = ModelApiConsumer.replace(/Model/g, enntityNameFistLetterUpper);
             ModelApiConsumer = ModelApiConsumer.replace(/model/g, entityName.toLowerCase());
 
-            modelRoutes = modelRoutes.replace(/Model/g, enntityNameFistLetterUpper);
-            modelRoutes = modelRoutes.replace(/model/g, entityName.toLowerCase());
+            ModelRoutes = ModelRoutes.replace(/Model/g, enntityNameFistLetterUpper);
+            ModelRoutes = ModelRoutes.replace(/model/g, entityName.toLowerCase());
 
             const models = {
                 ModelController,
                 ModelService,
                 ModelRepository,
                 ModelApiConsumer,
-                modelRoutes,
+                ModelRoutes,
             };
 
             const entityDir = `${dirPath}/${entityName}`;
@@ -214,12 +219,12 @@ function makeModel({ path, name }) {
             if (!fs.existsSync(entityDir)) {
                 fs.mkdirSync(entityDir);
                 console.log("Entity built successfully!");
-                createModelFiles(entityDir, entityName, models);
+                createModelFiles(entityDir, enntityNameFistLetterUpper, models);
             } else {
                 cmdReadline.question("The entity already exists. Do you want to overwrite it? (y/n) ", (answer) => {
                     if (answer === "y") {
                         console.log("Entity built successfully!");
-                        createModelFiles(entityDir, entityName, models);
+                        createModelFiles(entityDir, enntityNameFistLetterUpper, models);
                     } else {
                         console.log("Process aborted!");
                         cmdReadline.close();
@@ -232,16 +237,16 @@ function makeModel({ path, name }) {
 }
 
 function createModelFiles(entityDir, entityName, model) {
-    const { ModelController, ModelService, ModelRepository, ModelApiConsumer, modelRoutes } = model;
+    const { ModelController, ModelService, ModelRepository, ModelApiConsumer, ModelRoutes } = model;
 
     fs.writeFileSync(`${entityDir}/${entityName}Controller.js`, ModelController);
     fs.writeFileSync(`${entityDir}/${entityName}Service.js`, ModelService);
     fs.writeFileSync(`${entityDir}/${entityName}Repository.js`, ModelRepository);
     fs.writeFileSync(`${entityDir}/${entityName}ApiConsumer.js`, ModelApiConsumer);
-    fs.writeFileSync(`${entityDir}/${entityName}Routes.js`, modelRoutes);
+    fs.writeFileSync(`${entityDir}/${entityName}Routes.js`, ModelRoutes);
 
     cmdReadline.question("Do you want to create a route for this entity? (y/n) ", (answer) => {
-        if (answer === "y" || answer === "Y" || answer === "yes" || answer === "Yes") {
+        if (!noAnswer.includes(answer)) {
             const routeCreated = createModelRoute({ name: entityName });
             if (routeCreated) {
                 console.log("Route built successfully!");
@@ -255,18 +260,21 @@ function createModelFiles(entityDir, entityName, model) {
 }
 
 function createModelRoute({ name }) {
-    const path = `./domains/${name}/${name}Routes.js`;
-    const entityName = name.toLowerCase();
+    name = name.toLowerCase();
+    let nameFirtsLetterUpper = name[0].toUpperCase() + name.slice(1);
+    const path = `./domains/${name}/${nameFirtsLetterUpper}Routes.js`;
     let routesFile = fs.readFileSync(`${projectDir}/src/app/routes.js`, "utf-8");
 
     //create route on last line
     let lines = routesFile.split("\n");
-    const newRoute = `routes.use("/${entityName}", ${entityName}Routes);\n`;
-
+    const newRoute = `routes.use("/${name}", ${name}Routes);\n`;
     lines.push(newRoute);
-    lines.unshift(`import { ${entityName}Routes } from "${path}";`);
+
+    const importLine = `import { ${name}Routes } from "${path}";`
+    lines.unshift(importLine);
 
     routesFile = lines.join("\n");
+
     try {
         fs.writeFileSync(`${currentWorkingDirectory}/src/app/routes.js`, routesFile);
         return true;
