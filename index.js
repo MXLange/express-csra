@@ -29,7 +29,10 @@ program
         "This is a program to build an entire express project with the provided commands. The project provides controllers, services, repositories and API consumption."
     );
 
-program.option("-n, --name <name>", "Give a name.").option("-p, --path <path>", "Give the destination path.");
+program
+    .option("-n, --name <name>", "Give a name.")
+    .option("-p, --path <path>", "Give the destination path.")
+    .option("-t, --type <type>", "Give the type of the feature.");
 
 program
     .command("make")
@@ -58,9 +61,124 @@ program
         makeModel({ path: null, name });
     });
 
+const featureTypes = ["jwtAuth"];
+
+program
+    .command("insert")
+    .description("This command inserts many optional features into the API.")
+    .action(async () => {
+        let { type } = program.opts();
+        if (!type) {
+            console.warn("You must provide the feature type. Use the -t or --type option.");
+            console.log("Entity not built successfully!");
+            process.exit(0);
+        }
+        if (!featureTypes.includes(type)) {
+            console.warn("Invalid feature type.");
+            console.log(`Available feature types: \n${featureTypes.join("\n")}`);
+            console.log("Entity not built successfully!");
+            process.exit(0);
+        }
+        insertFeature({ type });
+    });
+
 program.parse(process.argv);
 
 // Functions
+
+function insertFeature({ type }) {
+    switch (type) {
+        case "jwtAuth":
+            insertJwtAuth();
+            break;
+        default:
+            console.warn("Invalid feature type.");
+            console.log(`Available feature types: \n${featureTypes.join("\n")}`);
+            console.log("Entity not built successfully!");
+            process.exit(0);
+    }
+}
+
+function insertJwtAuth() {
+    //Check if the project has the jwtAuth feature
+    const jwtAuthDir = `${currentWorkingDirectory}/src/app/domains/login`;
+    if (fs.existsSync(jwtAuthDir)) {
+        console.warn("The jwtAuth feature already exists.");
+        cmdReadline.question("Do you want to overwrite it? (y/n) ", (answer) => {
+            if (noAnswer.includes(answer)) {
+                console.log("Process aborted!");
+                cmdReadline.close();
+                process.exit(0);
+            }
+            cmdReadline.question("This will overwrite the jwtAuth feature files and all code you may have written. Do you want to continue? (y/n) ", (answer) => {
+                if (noAnswer.includes(answer)) {
+                    console.log("Process aborted!");
+                    cmdReadline.close();
+                    process.exit(0);
+                }
+                fs.rmdirSync(jwtAuthDir, { recursive: true });
+                const jwtAuthClassPath = `${projectDir}/src/app/shared/classes/JwtAuth.js`;
+                const AuthMiddlewarePath = `${projectDir}/src/app/shared/middlewares/AuthMiddleware.js`;
+                if(fs.existsSync(jwtAuthClassPath)){
+                    try {
+                        fs.unlinkSync(jwtAuthClassPath);
+                    } catch (error) {
+                        console.error(`Error deleting file: ${error.message}`);
+                    }
+                }
+                if(fs.existsSync(AuthMiddlewarePath)){
+                    try {
+                        fs.unlinkSync(AuthMiddlewarePath);
+                    } catch (error) {
+                        console.error(`Error deleting file: ${error.message}`);
+                    }
+                }
+                insertJwtAuthFiles();
+                cmdReadline.close();
+                process.exit(0);
+            });
+        });
+    } else {
+        insertJwtAuthFiles();
+        cmdReadline.close();
+        process.exit(0);
+    }
+}
+
+async function insertJwtAuthFiles() {
+    const sourceDirectory = `${projectDir}/optionals/auth/jwt/login`;
+    const destinationDirectory = `${currentWorkingDirectory}/src/app/domain/login`;
+    await fsExtra.copy(sourceDirectory, destinationDirectory).catch((err) => {
+        fs.rmdirSync(`${destinationDirectory}`, { recursive: true });
+        console.error(`Error copying files: ${err}`);
+        console.log("Project not built successfully!");
+        process.exit(0);
+    });
+
+    const jwtAuthClassFile = `${projectDir}/optionals/auth/jwt/JwtAuth.js`;
+    const AuthMiddlewareFile = `${projectDir}/optionals/auth/jwt/AuthMiddleware.js`;
+
+    const jwtAuthClassDestination = `${currentWorkingDirectory}/src/app/shared/classes/JwtAuth.js`;
+    const AuthMiddlewareDestination = `${currentWorkingDirectory}/src/app/shared/middlewares/AuthMiddleware.js`;
+
+    await fsExtra.copy(jwtAuthClassFile, jwtAuthClassDestination).catch((err) => {
+        fs.rmdirSync(`${destinationDirectory}`, { recursive: true });
+        console.error(`Error copying files: ${err}`);
+        console.log("Project not built successfully!");
+        process.exit(0);
+    });
+
+    await fsExtra.copy(AuthMiddlewareFile, AuthMiddlewareDestination).catch((err) => {
+        fs.rmdirSync(`${destinationDirectory}`, { recursive: true });
+        fs.unlinkSync(jwtAuthClassDestination);
+        console.error(`Error copying files: ${err}`);
+        console.log("Project not built successfully!");
+        process.exit(0);
+    });
+    console.log("jwtAuth feature inserted successfully!");
+    cmdReadline.close();
+    process.exit(0);
+}
 
 function make(name) {
     if (fs.existsSync(`${currentWorkingDirectory}/${name}`)) {
@@ -121,7 +239,7 @@ async function createProject(name) {
     const devDependencies = ["nodemon"];
     const dependenciesAsString = dependencies.join(" ");
     const devDependenciesAsString = devDependencies.join(" ");
-    
+
     command = `npm install ${dependenciesAsString}`;
 
     console.log("Installing dependencies...");
@@ -270,7 +388,7 @@ function createModelRoute({ name }) {
     const newRoute = `routes.use("/${name}", ${name}Routes);\n`;
     lines.push(newRoute);
 
-    const importLine = `import { ${name}Routes } from "${path}";`
+    const importLine = `import { ${name}Routes } from "${path}";`;
     lines.unshift(importLine);
 
     routesFile = lines.join("\n");
