@@ -5,7 +5,7 @@ export const loginRoutes = Router();
 
 const loginController = new LoginController();
 
-loginRoutes.get("/:token", loginController.tokenVerify);
+loginRoutes.get("/", loginController.tokenVerify);
 loginRoutes.post("/", loginController.loginJwt);
 
 
