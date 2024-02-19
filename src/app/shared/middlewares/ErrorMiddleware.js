@@ -1,7 +1,7 @@
 import AppError from "../classes/AppError.js";
 import AppResponse from "../classes/AppResponse.js";
 
-export function error_middleware(error, req, res, next) {
+export function errorMiddleware(error, req, res, next) {
     let response = {};
     if(error instanceof AppError) {
         response = new AppResponse({
