@@ -1,5 +1,5 @@
 import LoginRepository from "./LoginRepository.js";
-import JwtAuth from "../shared/classes/JwtAuth.js";
+import JwtAuth from "../../shared/classes/JwtAuth.js";
 
 export default class LoginService {
     async loginJwt({ email, password }) {
@@ -26,7 +26,27 @@ export default class LoginService {
         return token;
     }
     async tokenVerify({ token }) {
+        if(!token) {
+            throw new AppError({
+                success: false,
+                message: "Token not found",
+                statusCode: 401,
+                errors: ["Token not found"],
+            });
+        }
+        const splitedToken = token.split(" ");
+        const bearer = splitedToken[0];
+        if(bearer !== "Bearer") {
+            throw new AppError({
+                success: false,
+                message: "Invalid token",
+                statusCode: 401,
+                errors: ["Invalid token"],
+            });
+        }
+        token = splitedToken[1];
         const jwtAuth = new JwtAuth();
-        return jwtAuth.checkTokenValidity(token);
+        const isTokenValid = jwtAuth.checkTokenValidity(token);
+        return isTokenValid;
     }
 }

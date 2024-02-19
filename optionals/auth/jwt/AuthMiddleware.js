@@ -11,8 +11,8 @@ export async function authMiddleware(req, res, next) {
         });
     }
     
-    [bearer, token] = token.split(" ");
-    
+    const splitedToken = token.split(" ");
+    const bearer = splitedToken[0];
     if (bearer !== "Bearer") {
         throw new AppError({
             success: false,
@@ -21,7 +21,7 @@ export async function authMiddleware(req, res, next) {
             errors: ["Invalid token"],
         });
     }
-    
+    token = splitedToken[1];
     const loginService = new LoginService();
     const isTokenValid = await loginService.tokenVerify({ token });
     
@@ -33,5 +33,10 @@ export async function authMiddleware(req, res, next) {
             errors: ["Invalid token"],
         });
     }
+
+    req.token = token;
+    req.userId = isTokenValid.id;
+    req.userEmail = isTokenValid.email;
+    
     next();
 }

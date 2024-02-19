@@ -13,13 +13,13 @@ export default class LoginController {
         res.status(200).json(response);
     }
     async tokenVerify(req, res) {
-        const { token } = req.params;
+        const { authorization } = req.headers;
+        const token = authorization;
         const loginService = new LoginService();
         const isTokenValid = await loginService.tokenVerify({ token });
         const response = new AppResponse({
             success: true,
             result: isTokenValid,
-        
         });
         res.status(200).json(response);
     }

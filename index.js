@@ -23,6 +23,10 @@ currentModulePath = currentModulePath.replace(/\\/g, "/");
 currentWorkingDirectory = currentWorkingDirectory.replace(/\\/g, "/");
 projectDir = projectDir.replace(/\\/g, "/");
 
+console.log("Current module path: ", currentModulePath);
+console.log("Current working directory: ", currentWorkingDirectory);
+console.log("Project directory: ", projectDir);
+
 program
     .version("0.0.1")
     .description(
@@ -100,6 +104,8 @@ function insertFeature({ type }) {
 }
 
 function insertJwtAuth() {
+    console.log("Inserting feature...");
+
     //Check if the project has the jwtAuth feature
     const jwtAuthDir = `${currentWorkingDirectory}/src/app/domains/login`;
     if (fs.existsSync(jwtAuthDir)) {
@@ -110,33 +116,36 @@ function insertJwtAuth() {
                 cmdReadline.close();
                 process.exit(0);
             }
-            cmdReadline.question("This will overwrite the jwtAuth feature files and all code you may have written. Do you want to continue? (y/n) ", (answer) => {
-                if (noAnswer.includes(answer)) {
-                    console.log("Process aborted!");
+            cmdReadline.question(
+                "This will overwrite the jwtAuth feature files and all code you may have written. Do you want to continue? (y/n) ",
+                async (answer) => {
+                    if (noAnswer.includes(answer)) {
+                        console.log("Process aborted!");
+                        cmdReadline.close();
+                        process.exit(0);
+                    }
+                    fs.rmdirSync(jwtAuthDir, { recursive: true });
+                    const jwtAuthClassPath = `${projectDir}/src/app/shared/classes/JwtAuth.js`;
+                    const AuthMiddlewarePath = `${projectDir}/src/app/shared/middlewares/AuthMiddleware.js`;
+                    if (fs.existsSync(jwtAuthClassPath)) {
+                        try {
+                            fs.unlinkSync(jwtAuthClassPath);
+                        } catch (error) {
+                            console.error(`Error deleting file: ${error.message}`);
+                        }
+                    }
+                    if (fs.existsSync(AuthMiddlewarePath)) {
+                        try {
+                            fs.unlinkSync(AuthMiddlewarePath);
+                        } catch (error) {
+                            console.error(`Error deleting file: ${error.message}`);
+                        }
+                    }
+                    insertJwtAuthFiles();
                     cmdReadline.close();
                     process.exit(0);
                 }
-                fs.rmdirSync(jwtAuthDir, { recursive: true });
-                const jwtAuthClassPath = `${projectDir}/src/app/shared/classes/JwtAuth.js`;
-                const AuthMiddlewarePath = `${projectDir}/src/app/shared/middlewares/AuthMiddleware.js`;
-                if(fs.existsSync(jwtAuthClassPath)){
-                    try {
-                        fs.unlinkSync(jwtAuthClassPath);
-                    } catch (error) {
-                        console.error(`Error deleting file: ${error.message}`);
-                    }
-                }
-                if(fs.existsSync(AuthMiddlewarePath)){
-                    try {
-                        fs.unlinkSync(AuthMiddlewarePath);
-                    } catch (error) {
-                        console.error(`Error deleting file: ${error.message}`);
-                    }
-                }
-                insertJwtAuthFiles();
-                cmdReadline.close();
-                process.exit(0);
-            });
+            );
         });
     } else {
         insertJwtAuthFiles();
@@ -145,15 +154,18 @@ function insertJwtAuth() {
     }
 }
 
-async function insertJwtAuthFiles() {
+function insertJwtAuthFiles() {
     const sourceDirectory = `${projectDir}/optionals/auth/jwt/login`;
-    const destinationDirectory = `${currentWorkingDirectory}/src/app/domain/login`;
-    await fsExtra.copy(sourceDirectory, destinationDirectory).catch((err) => {
+    const destinationDirectory = `${currentWorkingDirectory}/src/app/domains/login`;
+
+    try {
+        fsExtra.copySync(sourceDirectory, destinationDirectory);
+    } catch (error) {
         fs.rmdirSync(`${destinationDirectory}`, { recursive: true });
         console.error(`Error copying files: ${err}`);
         console.log("Project not built successfully!");
         process.exit(0);
-    });
+    }
 
     const jwtAuthClassFile = `${projectDir}/optionals/auth/jwt/JwtAuth.js`;
     const AuthMiddlewareFile = `${projectDir}/optionals/auth/jwt/AuthMiddleware.js`;
@@ -161,20 +173,40 @@ async function insertJwtAuthFiles() {
     const jwtAuthClassDestination = `${currentWorkingDirectory}/src/app/shared/classes/JwtAuth.js`;
     const AuthMiddlewareDestination = `${currentWorkingDirectory}/src/app/shared/middlewares/AuthMiddleware.js`;
 
-    await fsExtra.copy(jwtAuthClassFile, jwtAuthClassDestination).catch((err) => {
+    try {
+        fsExtra.copyFileSync(jwtAuthClassFile, jwtAuthClassDestination);
+    } catch (error) {
         fs.rmdirSync(`${destinationDirectory}`, { recursive: true });
         console.error(`Error copying files: ${err}`);
         console.log("Project not built successfully!");
         process.exit(0);
-    });
+    }
 
-    await fsExtra.copy(AuthMiddlewareFile, AuthMiddlewareDestination).catch((err) => {
+    try {
+        fsExtra.copyFileSync(AuthMiddlewareFile, AuthMiddlewareDestination);
+    } catch (error) {
         fs.rmdirSync(`${destinationDirectory}`, { recursive: true });
         fs.unlinkSync(jwtAuthClassDestination);
         console.error(`Error copying files: ${err}`);
         console.log("Project not built successfully!");
         process.exit(0);
-    });
+    }
+    if (createModelRoute({ name: "login" })) {
+        console.log("Route built successfully!");
+    } else {
+        console.log("Route not built successfully!");
+    }
+
+    const command = `npm install jsonwebtoken`;
+
+    console.log("Installing dependencies...");
+    try {
+        execSync(command, { cwd: `${currentWorkingDirectory}`, stdio: "inherit" });
+        console.log("Dependencies installed successfully.");
+    } catch (error) {
+        console.error(`Error installing dependencies: ${error.message}`);
+    }
+
     console.log("jwtAuth feature inserted successfully!");
     cmdReadline.close();
     process.exit(0);
@@ -381,11 +413,12 @@ function createModelRoute({ name }) {
     name = name.toLowerCase();
     let nameFirtsLetterUpper = name[0].toUpperCase() + name.slice(1);
     const path = `./domains/${name}/${nameFirtsLetterUpper}Routes.js`;
-    let routesFile = fs.readFileSync(`${projectDir}/src/app/routes.js`, "utf-8");
+    let routesFile = fs.readFileSync(`${currentWorkingDirectory}/src/app/routes.js`, "utf-8");
 
+    console.log(routesFile);
     //create route on last line
     let lines = routesFile.split("\n");
-    const newRoute = `routes.use("/${name}", ${name}Routes);\n`;
+    const newRoute = `routes.use("/${name}", ${name}Routes);`;
     lines.push(newRoute);
 
     const importLine = `import { ${name}Routes } from "${path}";`;
@@ -400,4 +433,42 @@ function createModelRoute({ name }) {
         console.error(`Error creating route: ${error.message}`);
         return false;
     }
+}
+
+function removeRoute({ name }) {
+    return new Promise((resolve, reject) => {
+        name = name.toLowerCase();
+        let nameFirtsLetterUpper = name[0].toUpperCase() + name.slice(1);
+        const path = `./domains/${name}/${nameFirtsLetterUpper}Routes.js`;
+        let routesFile = fs.readFileSync(`${currentWorkingDirectory}/src/app/routes.js`, "utf-8");
+
+        let lines = routesFile.split("\n");
+
+        let newLines = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            if (!lines[i].includes(name)) {
+                newLines.push(lines[i]);
+            } else {
+                console.log(lines[i])
+
+            }
+        }
+
+        const newRoute = `routes.use("/${name}", ${name}Routes);`;
+        newLines.push(newRoute);
+
+        const importLine = `import { ${name}Routes } from "${path}";`;
+        newLines.unshift(importLine);
+
+        routesFile = newLines.join("\n");
+
+        try {
+            fs.writeFileSync(`${currentWorkingDirectory}/src/app/routes.js`, routesFile);
+            resolve(true);
+        } catch (error) {
+            console.error(`Error removing route: ${error.message}`);
+            reject(false);
+        }
+    });
 }
