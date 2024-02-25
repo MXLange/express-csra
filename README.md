@@ -44,6 +44,7 @@ At this version we have two commands available:
 <span style="color:#00BFFF">csra insert -t \<entity-name\></span>, <span style="color:#00FF00">this command must be run inside project directoy</span>. When running this command you'll be able to install some features to your API. For now you can try:
 
 <span style="color:#00BFFF">csra insert -t jwtAuth</span>, a login route, middleware and class will be added to your project.
+
 <span style="color:#00BFFF">csra insert -t axiosInstance</span>, a axios instance will be added to your shared folder. (shared/connections/axios)
 
 ## Contributing
