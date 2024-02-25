@@ -45,7 +45,7 @@ At this version we have two commands available:
 
 <span style="color:#00BFFF">csra insert -t jwtAuth</span>, a login route, middleware and class will be added to your project.
 
-<span style="color:#00BFFF">csra insert -t axiosInstance</span>, a axios instance will be added to your shared folder. (shared/connections/axios)
+<span style="color:#00BFFF">csra insert -t axiosInstance</span>, an axios instance will be added to your shared folder. (shared/connections/axios)
 
 ## Contributing
 
