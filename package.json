@@ -1,6 +1,6 @@
 {
   "name": "express-csra",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A project builder to Controller, Service, Repository and API's with express.",
   "main": "index.js",
   "type": "module",
