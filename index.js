@@ -65,7 +65,7 @@ program
         makeModel({ path: null, name });
     });
 
-const featureTypes = ["jwtAuth"];
+const featureTypes = ["jwtAuth", "axiosInstance"];
 
 program
     .command("insert")
@@ -95,12 +95,57 @@ function insertFeature({ type }) {
         case "jwtAuth":
             insertJwtAuth();
             break;
+        case "axiosInstance":
+            insertAxios();
+            break;
         default:
             console.warn("Invalid feature type.");
             console.log(`Available feature types: \n${featureTypes.join("\n")}`);
             console.log("Entity not built successfully!");
             process.exit(0);
     }
+}
+
+function insertAxios() {
+    console.log("Inserting feature...");
+
+    //Check if shared directory contains connections directory
+    const connectionsDir = `${currentWorkingDirectory}/src/app/shared/connections`;
+    if (!fs.existsSync(connectionsDir)) {
+        fs.mkdirSync(connectionsDir, { recursive: true });
+    }
+
+    //Copy the axios directory to the connections directory
+
+    const sourceDirectory = `${projectDir}/optionals/connections/axios`;
+    const destinationDirectory = `${currentWorkingDirectory}/src/app/shared/connections/axios`;
+
+    try {
+        fsExtra.copySync(sourceDirectory, destinationDirectory);
+    } catch (error) {
+        console.log(`Error copying axios dir: ${error.message}`);
+        console.log("Feature not inserted successfully!");
+        cmdReadline.close();
+        process.exit(0);
+    }
+
+    // Install axios package
+    const command = `npm install axios`;
+
+    console.log("Installing dependencies...");
+    try {
+        execSync(command, { cwd: `${currentWorkingDirectory}`, stdio: "inherit" });
+        console.log("Dependencies installed successfully.");
+        console.log("Feature inserted successfully!");
+        cmdReadline.close();
+        process.exit(0);
+    } catch (error) {
+        console.error(`Error installing dependencies: ${error.message}`);
+        console.log("Feature not inserted completely, try to install the dependencies manually.");
+        cmdReadline.close();
+        process.exit(0);
+    }
+
 }
 
 function insertJwtAuth() {
